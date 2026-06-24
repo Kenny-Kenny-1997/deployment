@@ -139,3 +139,68 @@ middleware.ts    route protection (redirects unauthenticated users)
   would need a shared store (Redis).
 - No file upload for avatars/post images yet — `avatarUrl`/`imageUrl` are
   plain URL fields.
+
+## Deployment
+
+### Hosting & database
+
+| Service | Choice | Why |
+|---|---|---|
+| Hosting | **Vercel** | Zero-config Next.js deploys, automatic preview URLs per branch, no hosting provider was mandated by the assignment. |
+| Database | **TiDB Serverless** | Speaks the MySQL wire protocol, so `schema.prisma` needs zero changes. PlanetScale was the obvious first choice but no longer has a free tier (confirmed on their pricing page — paid plans start at $5/month). |
+
+### Setup
+
+1. **Database** — create a free **Serverless** cluster at
+   [tidbcloud.com](https://tidbcloud.com), copy the connection string
+   from the "Connect" panel (Prisma format), and set it as
+   `DATABASE_URL`.
+2. **Vercel** — import the repo at
+   [vercel.com/new](https://vercel.com/new). Add `DATABASE_URL`,
+   `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES_IN`,
+   `JWT_REFRESH_EXPIRES_IN` under **Project Settings → Environment
+   Variables** — set separate values for Preview and Production so
+   staging never touches production data.
+3. **GitHub Actions secrets** — add `VERCEL_TOKEN`,
+   `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (get the last two by running
+   `vercel link` locally) so `.github/workflows/deploy.yml` can deploy
+   on your behalf.
+4. **Approval gate** — in GitHub repo → Settings → Environments,
+   create a `production` environment and add required reviewers. This
+   means a push to `main` won't go live until someone approves it.
+
+### Branching → environment mapping
+
+This matches the project's existing two-remote habit
+(`origin/dev` for Qwasar, `github/main` for GitHub):
+
+- `dev` → auto-deploys to **staging** on every push (`deploy-staging` job).
+- `main` → deploys to **production**, gated behind manual approval
+  (`deploy-production` job).
+
+### CI/CD pipeline
+
+`.github/workflows/ci.yml` runs on every push/PR to `main`/`dev`:
+lint → production build (with dummy env vars, since `next build` never
+opens a real DB connection) → `npm audit`.
+
+`.github/workflows/deploy.yml` runs only on pushes to `main`/`dev`:
+builds with real Vercel environment variables, deploys, and for
+production specifically, hits `/api/health` afterward to confirm the
+live deployment can actually reach the database before calling the
+deploy successful.
+
+### Monitoring
+
+- `GET /api/health` — returns `200` with DB status if `SELECT 1`
+  succeeds, `503` otherwise. Point any uptime monitor at this.
+- Core Web Vitals (LCP, CLS, INP, FCP, TTFB) are beaconed from every
+  page load to `POST /api/metrics` via `WebVitalsReporter` (mounted in
+  `app/layout.tsx`), currently logged to Vercel's function logs.
+
+### Security headers
+
+`next.config.mjs` sets CSP, HSTS, X-Frame-Options, X-Content-Type-Options,
+Referrer-Policy, and Permissions-Policy globally — these were absent
+from the original config and needed to be added for production.
+

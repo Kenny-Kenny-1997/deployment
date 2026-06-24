@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import useSWR from "swr";
 import { useState } from "react";
 import { useParams } from "next/navigation";
@@ -67,17 +68,25 @@ export default function ProfilePage() {
         </div>
 
         {!isOwnProfile && (
-          <button
-            onClick={toggleFollow}
-            disabled={pending}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-              profile.followedByMe
-                ? "border border-ink-600 text-mist-100 hover:border-pulse hover:text-pulse"
-                : "bg-pulse text-white hover:bg-pulse-dim"
-            } disabled:opacity-50`}
-          >
-            {profile.followedByMe ? "Following" : "Follow"}
-          </button>
+          <div className="flex gap-2">
+            <Link
+              href={`/messages/${profile.username}`}
+              className="rounded-full border border-ink-600 px-4 py-2 text-sm font-semibold text-mist-100 transition-colors hover:border-mist-400"
+            >
+              Message
+            </Link>
+            <button
+              onClick={toggleFollow}
+              disabled={pending}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                profile.followedByMe
+                  ? "border border-ink-600 text-mist-100 hover:border-pulse hover:text-pulse"
+                  : "bg-pulse text-white hover:bg-pulse-dim"
+              } disabled:opacity-50`}
+            >
+              {profile.followedByMe ? "Following" : "Follow"}
+            </button>
+          </div>
         )}
       </div>
 

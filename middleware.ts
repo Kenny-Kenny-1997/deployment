@@ -1,22 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAccessToken } from "@/lib/jwt";
+import { jwtVerify } from "jose";
+
+// Middleware runs on the Edge Runtime, which doesn't support Node's
+// `crypto` module - so it can't use the `jsonwebtoken` package that the
+// rest of the app uses. `jose` is a pure Web Crypto API implementation
+// that works in both environments, so it's used here specifically for
+// this file.
+const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET);
 
 const PROTECTED_PREFIXES = ["/feed", "/profile", "/messages", "/settings"];
 const AUTH_PAGES = ["/login", "/register"];
 
-export function middleware(req: NextRequest) {
+async function isValidAccessToken(token: string | undefined): Promise<boolean> {
+  if (!token) return false;
+  try {
+    await jwtVerify(token, ACCESS_SECRET);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("access_token")?.value;
-
-  let isAuthenticated = false;
-  if (token) {
-    try {
-      verifyAccessToken(token);
-      isAuthenticated = true;
-    } catch {
-      isAuthenticated = false;
-    }
-  }
+  const isAuthenticated = await isValidAccessToken(token);
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));

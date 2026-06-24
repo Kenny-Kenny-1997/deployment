@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  quality-gate:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production build
+        # npm ci already triggered "postinstall": "prisma generate",
+        # so the client exists before this runs. A dummy DATABASE_URL
+        # is enough — Prisma's generated client doesn't need to reach
+        # a live database just for `next build` to succeed.
+        run: npm run build
+        env:
+          DATABASE_URL: "mysql://user:pass@localhost:3306/ci"
+          JWT_ACCESS_SECRET: "ci-build-secret-not-used-in-production"
+          JWT_REFRESH_SECRET: "ci-build-secret-not-used-in-production-2"
+          NEXT_PUBLIC_APP_URL: "https://ci-build.local"
+
+  security-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit for known vulnerabilities
+        run: npm audit --audit-level=high
+        continue-on-error: true # report only — review findings manually
