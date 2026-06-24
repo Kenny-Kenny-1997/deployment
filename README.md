@@ -1,5 +1,7 @@
 # Pulse — Enterprise Social Platform
 
+**Live:** [deployment-kenny15.vercel.app](https://deployment-kenny15.vercel.app)
+
 A backend-focused social platform built for the Qwasar Enterprise Backend
 Integration Platform project. Domain: **Social Platform (Meta-style)**.
 
