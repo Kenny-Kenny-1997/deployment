@@ -1,7 +1,5 @@
 # Pulse — Enterprise Social Platform
 
-**Live:** [deployment-kenny15.vercel.app](https://deployment-kenny15.vercel.app)
-
 A backend-focused social platform built for the Qwasar Enterprise Backend
 Integration Platform project. Domain: **Social Platform (Meta-style)**.
 
@@ -199,6 +197,27 @@ deploy successful.
 - Core Web Vitals (LCP, CLS, INP, FCP, TTFB) are beaconed from every
   page load to `POST /api/metrics` via `WebVitalsReporter` (mounted in
   `app/layout.tsx`), currently logged to Vercel's function logs.
+- **Vercel Analytics** and **Speed Insights** are enabled on the
+  production deployment (`@vercel/analytics`, `@vercel/speed-insights`,
+  mounted in `app/layout.tsx`):
+
+  **Analytics** — visitors, page views, top routes, geography:
+
+  ![Vercel Analytics dashboard](./docs/screenshots/analytics-dashboard.png)
+
+  **Speed Insights** — Real Experience Score of 100 ("Great") on
+  production, with sub-second paint times on every route:
+
+  ![Vercel Speed Insights dashboard](./docs/screenshots/speed-insights-dashboard.png)
+
+  | Metric | Value |
+  |---|---|
+  | Real Experience Score | 100 (Great) |
+  | First Contentful Paint | 0.65s |
+  | Largest Contentful Paint | 0.98s |
+  | Interaction to Next Paint | 64ms |
+  | Cumulative Layout Shift | 0 |
+  | Time to First Byte | 0.21s |
 
 ### Security headers
 
