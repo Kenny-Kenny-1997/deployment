@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import WebVitalsReporter from "@/lib/WebVitalsReporter";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,6 +34,8 @@ export default function RootLayout({
       >
         <WebVitalsReporter />
         <AuthProvider>{children}</AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
